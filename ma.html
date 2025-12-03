@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>환율 대시보드</title>
+
+    <!-- Tailwind CSS CDN (개발용) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js & DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<!-- Navigation -->
+<nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1"/>
+                            <rect width="7" height="5" x="14" y="3" rx="1"/>
+                            <rect width="7" height="9" x="14" y="12" rx="1"/>
+                            <rect width="7" height="5" x="3" y="16" rx="1"/>
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-gray-900">DashPro</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="pt-20 px-6 pb-6 max-w-7xl mx-auto">
+
+    <!-- 미국 환율 패널 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="mb-3">
+            <h1 class="text-xl font-bold text-gray-900">미국 환율</h1>
+        </div>
+
+        <!-- 성과 통계 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <!-- 변화율 텍스트 제거 -->
+                </div>
+                <div class="text-gray-600 text-sm mb-1">현재가</div>
+                <div class="text-xl font-semibold text-gray-900">
+                    <span id="us-current">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1개월 환율 (USD/KRW)</h3>
+                <canvas id="usChart1"></canvas>
+            </div>
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1주일 예상</h3>
+                <canvas id="usChart2"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 일본 환율 패널 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="mb-3">
+            <h1 class="text-xl font-bold text-gray-900">일본 환율</h1>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <!-- jp-change 제거 -->
+                </div>
+                <div class="text-gray-600 text-sm mb-1">현재가</div>
+                <div class="text-xl font-semibold text-gray-900">
+                    <span id="jp-current">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1개월 환율 (JPY/KRW)</h3>
+                <canvas id="jpChart1"></canvas>
+            </div>
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1주일 예상</h3>
+                <canvas id="jpChart2"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 중국 환율 패널 -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="mb-3">
+            <h1 class="text-xl font-bold text-gray-900">중국 환율</h1>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <!-- cn-change 제거 -->
+                </div>
+                <div class="text-gray-600 text-sm mb-1">현재가</div>
+                <div class="text-xl font-semibold text-gray-900">
+                    <span id="cn-current">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1개월 환율 (CNY/KRW)</h3>
+                <canvas id="cnChart1"></canvas>
+            </div>
+            <div class="h-64">
+                <h3 class="text-sm font-semibold text-gray-900 mb-2">1주일 예상</h3>
+                <canvas id="cnChart2"></canvas>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const API_BASE = 'https://api.exchangerate.host';
+    const API_KEY  = '5e0007b1d102567a7e58eb85356b5f55';
+
+    Chart.register(ChartDataLabels);
+
+    // HEX → rgba
+    function hexToRgba(hex, alpha) {
+        const trimmed = hex.replace('#', '');
+        const bigint = parseInt(trimmed, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // 30일치: base=USD, currencies=KRW,JPY,CNY 한 번에 가져오기
+    async function fetchAllTimeframes(days = 30) {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - (days - 1));
+
+        const start = startDate.toISOString().slice(0, 10);
+        const end   = endDate.toISOString().slice(0, 10);
+
+        const url =
+            `${API_BASE}/timeframe` +
+            `?access_key=${API_KEY}` +
+            `&base=USD` +
+            `&currencies=KRW,JPY,CNY` +
+            `&start_date=${start}` +
+            `&end_date=${end}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.success) {
+            const info = data.error && data.error.info ? data.error.info : 'API 응답 오류';
+            throw new Error(info);
+        }
+
+        const quotes = data.quotes || data.rates;
+        if (!quotes) {
+            throw new Error('시계열 데이터가 없습니다.');
+        }
+
+        const rawDates = Object.keys(quotes).sort();
+
+        const labels = [];
+        const usdKrw = [];
+        const jpyKrw = [];
+        const cnyKrw = [];
+
+        for (const date of rawDates) {
+            const daily = quotes[date] || {};
+            const k = daily['USDKRW'];
+            const j = daily['USDJPY'];
+            const c = daily['USDCNY'];
+
+            // 세 값이 모두 있어야 사용
+            if (
+                typeof k === 'number' &&
+                typeof j === 'number' &&
+                typeof c === 'number'
+            ) {
+                labels.push(date);
+                usdKrw.push(k);
+                jpyKrw.push(Number((k / j).toFixed(4))); // 1 JPY = (USDKRW / USDJPY)
+                cnyKrw.push(Number((k / c).toFixed(4))); // 1 CNY = (USDKRW / USDCNY)
+            }
+        }
+
+        return { labels, usdKrw, jpyKrw, cnyKrw };
+    }
+
+    function calcChange(values) {
+        if (!values || values.length === 0) return { current: null, changePct: null };
+        const first = values[0];
+        const last  = values[values.length - 1];
+        const changePct = ((last - first) / first) * 100;
+        return { current: last, changePct };
+    }
+
+    // 아주 단순한 7일 예측 (마지막 값을 기준으로 ±0.6% 범위 선형)
+    function buildForecast(values) {
+        if (!values || values.length === 0) {
+            return { labels: [], values: [] };
+        }
+        const last = values[values.length - 1];
+        const labels = [];
+        const result = [];
+        for (let i = 1; i <= 7; i++) {
+            labels.push(`${i}일 후`);
+            const factor = 1 + (i - 4) * 0.002; // -0.6% ~ +0.6%
+            result.push(Number((last * factor).toFixed(2)));
+        }
+        return { labels, values: result };
+    }
+
+    // 공통 차트 옵션
+    const baseChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                enabled: true,
+                callbacks: {
+                    label: (ctx) => {
+                        const v = ctx.parsed.y;
+                        return `₩${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+                    }
+                }
+            },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                offset: 4,
+                formatter: (value) => value.toFixed(2),
+                clamp: true,
+                font: { size: 10 }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false,
+                grid: { color: '#f0f0f0' },
+                ticks: { callback: (value) => value.toLocaleString() }
+            },
+            x: {
+                grid: { color: '#f8f8f8' }
+            }
+        }
+    };
+
+    function makeLineChart(ctx, labels, data, color, fill) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    borderColor: color,
+                    backgroundColor: fill ? hexToRgba(color, 0.18) : 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 4,
+                    tension: 0.35,
+                    fill
+                }]
+            },
+            options: baseChartOptions,
+            plugins: [ChartDataLabels]
+        });
+    }
+
+    // 각 패널 설정
+    function initPanel({ labels, values, currentElemId, monthCanvasId, weekCanvasId, color }) {
+        if (!values || values.length === 0) return;
+
+        const { current } = calcChange(values);
+        const forecast = buildForecast(values);
+
+        const currentElem = document.getElementById(currentElemId);
+        if (currentElem) {
+            currentElem.textContent =
+                `₩${current.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        }
+
+        const monthCtx = document.getElementById(monthCanvasId).getContext('2d');
+        makeLineChart(monthCtx, labels, values, color, false);
+
+        const weekCtx = document.getElementById(weekCanvasId).getContext('2d');
+        makeLineChart(weekCtx, forecast.labels, forecast.values, color, true);
+    }
+
+    // 초기화
+    (async function initDashboard() {
+        try {
+            const { labels, usdKrw, jpyKrw, cnyKrw } = await fetchAllTimeframes(30);
+
+            initPanel({
+                labels,
+                values: usdKrw,
+                currentElemId: 'us-current',
+                monthCanvasId: 'usChart1',
+                weekCanvasId: 'usChart2',
+                color: '#3b82f6'
+            });
+
+            initPanel({
+                labels,
+                values: jpyKrw,
+                currentElemId: 'jp-current',
+                monthCanvasId: 'jpChart1',
+                weekCanvasId: 'jpChart2',
+                color: '#8b5cf6'
+            });
+
+            initPanel({
+                labels,
+                values: cnyKrw,
+                currentElemId: 'cn-current',
+                monthCanvasId: 'cnChart1',
+                weekCanvasId: 'cnChart2',
+                color: '#10b981'
+            });
+        } catch (err) {
+            console.error('대시보드 초기화 오류:', err);
+        }
+    })();
+</script>
+
+</body>
+</html>
